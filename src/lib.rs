@@ -211,9 +211,9 @@ pub mod game {
         }
 
         pub fn is_game_over(&self) -> bool {
-            if self.is_stalemate() {
+            if self.has_winner() {
                 true
-            } else if self.has_winner() {
+            } else if self.is_stalemate() {
                 true
             } else {
                 false
