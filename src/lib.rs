@@ -24,7 +24,7 @@ pub mod game {
             }
         }
 
-	// Switch Player variant in place
+        // Switch Player variant in place
         fn switch_player(&mut self) {
             if *self == Player::X {
                 *self = Player::O;
@@ -169,32 +169,26 @@ pub mod game {
         fn has_winner(&self) -> bool {
             let mut winner: Option<Player> = None;
 
-            macro_rules! has {
-                ($player:expr, $x:expr, $y:expr) => {
-                    self.cells[$x][$y] == Some(*$player)
-                };
+            for i in 0..3 {
+                // Columns
+                match (self.cells[i][0], self.cells[i][1], self.cells[i][2]) {
+                    (Some(x), Some(y), Some(z)) if x == y && y == z => winner = Some(x),
+                    _ => {}
+                }
+                // Rows
+                match (self.cells[0][i], self.cells[1][i], self.cells[2][i]) {
+                    (Some(x), Some(y), Some(z)) if x == y && y == z => winner = Some(x),
+                    _ => {}
+                }
             }
-
-            for player in &[Player::X, Player::O] {
-                // Horizontal wins
-                for row in 0..=2 {
-                    if has!(player, row, 0) && has!(player, row, 1) && has!(player, row, 2) {
-                        winner = Some(*player);
-                    }
-                }
-                // Vertical wins
-                for col in 0..=2 {
-                    if has!(player, 0, col) && has!(player, 1, col) && has!(player, 2, col) {
-                        winner = Some(*player);
-                    }
-                }
-                // Diagonal wins
-                if has!(player, 0, 0) && has!(player, 1, 1) && has!(player, 2, 2) {
-                    winner = Some(*player);
-                }
-                if has!(player, 2, 0) && has!(player, 1, 1) && has!(player, 0, 2) {
-                    winner = Some(*player);
-                }
+            // Diagonals
+            match (self.cells[0][0], self.cells[1][1], self.cells[2][2]) {
+                (Some(x), Some(y), Some(z)) if x == y && y == z => winner = Some(x),
+                _ => {}
+            }
+            match (self.cells[2][0], self.cells[1][1], self.cells[0][2]) {
+                (Some(x), Some(y), Some(z)) if x == y && y == z => winner = Some(x),
+                _ => {}
             }
 
             if winner != None {

@@ -16,9 +16,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             let p = match play {
                 Some(p) => *p,
                 None => {
-		    println!("\nError generating AI move.");
-		    continue;
-		}
+                    println!("\nError generating AI move.");
+                    continue;
+                }
             };
             board.update(p);
         } else {
