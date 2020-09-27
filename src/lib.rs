@@ -26,11 +26,7 @@ pub mod game {
 
         // Switch Player variant in place
         fn switch_player(&mut self) {
-            if *self == Player::X {
-                *self = Player::O;
-            } else {
-                *self = Player::X
-            }
+            *self = self.other_player()
         }
     }
 
@@ -194,10 +190,7 @@ pub mod game {
             if winner != None {
                 println!();
                 self.draw();
-                println!(
-                    "\nGame over! {:?} wins!\n",
-                    self.current_player.other_player()
-                );
+                println!("\nGame over! {} wins!\n", winner.unwrap().to_char());
                 true
             } else {
                 false
