@@ -1,4 +1,4 @@
-use tic_tac_toe::game::{self, TicTacToe};
+use tic_tac_toe::game::{Move, Player, TicTacToe};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut board = TicTacToe::new();
@@ -6,33 +6,24 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("Tic-Tac-Toe");
 
     loop {
-        let current_player = board.current_player();
-
-        println!("\n{}'s turn\n", current_player);
+        let _move: Option<Move>;
+        let player = board.current_player();
+        println!("\n{:?}'s turn\n", board.current_player());
         println!("{}", board);
 
-        if current_player == 'O' {
-            let play = board.generate_ai_play().unwrap();
-            if let Some(_move) = game::translate_to_coord(*play) {
-                if !board.apply_move(_move) {
-                    continue;
-                }
-            } else {
-                continue;
-            }
+        if board.current_player() == Player::O {
+            _move = Some(player.generate_ai_move(&mut board)).unwrap();
+
         } else {
-            let play = game::get_move();
-            match play {
-                Ok(p) => {
-                    let _move = game::translate_to_coord(p).unwrap();
-                    board.apply_move(_move);
-                }
-                Err(_) => {
-                    eprintln!("\nEnter an number from the board.");
-                    continue;
-                }
-            }
+            _move = Some(player.get_move()).unwrap();
         }
+
+        match _move {
+            Some(_move)  => (),
+            _  => continue,
+        }
+
+        board.apply_move(_move.unwrap());
 
         if board.is_game_over() {
             break;

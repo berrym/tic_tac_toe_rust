@@ -4,12 +4,17 @@ pub mod game {
     use std::io::{self, Write};
     use std::{thread, time};
 
-    type Move = (usize, usize);
+    pub type Move = (usize, usize);
 
     #[derive(Debug, Copy, Clone, Eq, PartialEq)]
     pub enum Player {
         X,
         O,
+    }
+
+    pub trait PlayerMove {
+        fn get_move(&self) -> Option<Move>;
+        fn generate_ai_move(&self, game: &mut TicTacToe) -> Option<Move>;
     }
 
     impl Player {
@@ -29,6 +34,26 @@ pub mod game {
 
         fn switch_player(&mut self) {
             *self = self.other_player()
+        }
+
+        pub fn get_move(&self) -> Option<Move> {
+            print!("\nEnter a number: ");
+            io::stdout().flush().unwrap();
+            let mut _move = String::new();
+            io::stdin()
+                .read_line(&mut _move)
+                .expect("Failed to get input!");
+            let _move = _move.trim().parse::<usize>();
+            translate_to_coord(_move.unwrap())
+        }
+
+        pub fn generate_ai_move(&self, state: &mut TicTacToe) -> Option<Move> {
+            thread::sleep(time::Duration::from_millis(500));
+            state.empty_moves = (1..=empty_cells(state.cells).len())
+                .map(usize::from)
+                .collect();
+            let rand = state.empty_moves.choose(&mut rand::thread_rng()).unwrap();
+            translate_to_coord(*rand)
         }
     }
 
@@ -58,17 +83,6 @@ pub mod game {
             9 => Some((2, 2)),
             _ => None,
         }
-    }
-
-    pub fn get_move() -> Result<usize, std::num::ParseIntError> {
-        print!("\nEnter a number: ");
-        io::stdout().flush().unwrap();
-        let mut _move = String::new();
-        io::stdin()
-            .read_line(&mut _move)
-            .expect("Failed to get input!");
-        let _move = _move.trim().parse::<usize>();
-        _move
     }
 
     #[derive(Debug, Clone, Eq, PartialEq)]
@@ -116,16 +130,8 @@ pub mod game {
             }
         }
 
-        pub fn generate_ai_play(&mut self) -> Option<&usize> {
-            thread::sleep(time::Duration::from_millis(500));
-            self.empty_moves = (1..=empty_cells(self.cells).len())
-                .map(usize::from)
-                .collect();
-            self.empty_moves.choose(&mut rand::thread_rng())
-        }
-
-        pub fn current_player(&self) -> char {
-            self.current_player.to_char()
+        pub fn current_player(&self) -> Player {
+            self.current_player
         }
 
         fn ref_cell(&self, index: usize) -> Option<Player> {
