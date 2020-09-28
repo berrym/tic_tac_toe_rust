@@ -12,11 +12,6 @@ pub mod game {
         O,
     }
 
-    pub trait PlayerMove {
-        fn get_move(&self) -> Option<Move>;
-        fn generate_ai_move(&self, game: &mut TicTacToe) -> Option<Move>;
-    }
-
     impl Player {
         fn to_char(self) -> char {
             match self {
