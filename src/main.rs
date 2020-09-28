@@ -1,7 +1,7 @@
-use tic_tac_toe::game;
+use tic_tac_toe::game::{self, TicTacToe};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let mut board = game::Board::new();
+    let mut board = TicTacToe::new();
 
     println!("Tic-Tac-Toe");
 
@@ -12,21 +12,23 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         board.draw();
 
         if current_player == 'O' {
-            let play = board.generate_ai_play();
-            let p = match play {
-                Some(p) => *p,
-                None => {
-                    println!("\nError generating AI move.");
+            let play = board.generate_ai_play().unwrap();
+            if let Some(_move) = game::translate_to_coord(*play) {
+                if !board.apply_move(_move) {
                     continue;
                 }
-            };
-            board.update(p);
+            } else {
+                continue;
+            }
         } else {
-            let play = board.get_play();
+            let play = game::get_move();
             match play {
-                Ok(p) => board.update(p),
+                Ok(p) => {
+                    let _move = game::translate_to_coord(p).unwrap();
+                    board.apply_move(_move);
+                }
                 Err(_) => {
-                    println!("\nEnter an number from the board.");
+                    eprintln!("\nEnter an number from the board.");
                     continue;
                 }
             }

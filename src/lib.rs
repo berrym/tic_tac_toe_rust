@@ -3,8 +3,10 @@ pub mod game {
     use std::io::{self, Write};
     use std::{thread, time};
 
+    type Move = (usize, usize);
+
     #[derive(Debug, Copy, Clone, Eq, PartialEq)]
-    enum Player {
+    pub enum Player {
         X,
         O,
     }
@@ -24,61 +26,74 @@ pub mod game {
             }
         }
 
-        // Switch Player variant in place
         fn switch_player(&mut self) {
             *self = self.other_player()
         }
     }
 
-    pub struct Board {
-        current_player: Player,
-        cells: [[Option<Player>; 3]; 3],
-        remaining_plays: Vec<usize>,
+    pub fn empty_cells(cells: [[Option<Player>; 3]; 3]) -> Vec<Move> {
+        let mut empty_cells: Vec<Move> = vec![];
+        for (x, row) in cells.iter().enumerate() {
+            for (y, cell) in row.iter().enumerate() {
+                match cell {
+                    Some(_cell) => {},
+                    _ => empty_cells.push((x, y))
+                }
+            }
+        }
+        empty_cells
     }
 
-    impl Board {
-        pub fn new() -> Board {
-            Board {
+    pub fn translate_to_coord(index: usize) -> Option<Move> {
+        match index {
+            1 => Some((0, 0)),
+            2 => Some((0, 1)),
+            3 => Some((0, 2)),
+            4 => Some((1, 0)),
+            5 => Some((1, 1)),
+            6 => Some((1, 2)),
+            7 => Some((2, 0)),
+            8 => Some((2, 1)),
+            9 => Some((2, 2)),
+            _ => None,
+        }
+    }
+
+    pub fn get_move() -> Result<usize, std::num::ParseIntError> {
+        print!("\nEnter a number: ");
+        io::stdout().flush().unwrap();
+        let mut _move = String::new();
+        io::stdin()
+            .read_line(&mut _move)
+            .expect("Failed to get input!");
+        let _move = _move.trim().parse::<usize>();
+        _move
+    }
+    
+    #[derive(Debug, Clone, Eq, PartialEq)]
+    pub struct TicTacToe {
+        current_player: Player,
+        cells: [[Option<Player>; 3]; 3],
+        empty_moves: Vec::<usize>
+    }
+
+    impl TicTacToe {
+        pub fn new() -> TicTacToe {
+            TicTacToe {
                 cells: [[None, None, None], [None, None, None], [None, None, None]],
                 current_player: Player::X,
-                remaining_plays: vec![1, 2, 3, 4, 5, 6, 7, 8, 9],
+                empty_moves: vec![],
             }
         }
 
-        pub fn generate_ai_play(&self) -> Option<&usize> {
+        pub fn generate_ai_play(&mut self) -> Option<&usize> {
             thread::sleep(time::Duration::from_millis(500));
-            self.remaining_plays.choose(&mut rand::thread_rng())
-        }
-
-        pub fn get_play(&self) -> Result<usize, std::num::ParseIntError> {
-            print!("\nEnter a number: ");
-            io::stdout().flush().unwrap();
-            let mut play = String::new();
-            io::stdin()
-                .read_line(&mut play)
-                .expect("Failed to get input!");
-
-            let play = play.trim().parse::<usize>();
-            play
+            self.empty_moves = (1..=empty_cells(self.cells).len()).map(usize::from).collect();
+            self.empty_moves.choose(&mut rand::thread_rng())
         }
 
         pub fn current_player(&self) -> char {
             self.current_player.to_char()
-        }
-
-        fn cell_index(&self, index: usize) -> Option<(usize, usize)> {
-            match index {
-                1 => Some((0, 0)),
-                2 => Some((0, 1)),
-                3 => Some((0, 2)),
-                4 => Some((1, 0)),
-                5 => Some((1, 1)),
-                6 => Some((1, 2)),
-                7 => Some((2, 0)),
-                8 => Some((2, 1)),
-                9 => Some((2, 2)),
-                _ => None,
-            }
         }
 
         fn ref_cell(&self, index: usize) -> Option<Player> {
@@ -126,33 +141,18 @@ pub mod game {
             );
         }
 
-        pub fn update(&mut self, play: usize) {
-            if play < 1 || play > 9 {
-                println!("\nInvalid move, try again.");
-                return;
-            }
-
-            if !self.remaining_plays.contains(&play) {
-                println!("\nMove already taken, try again!");
-                return;
-            }
-
-            if let Some((row, col)) = self.cell_index(play) {
-                self.cells[row][col] = Some(self.current_player);
-                let mut index: usize = 0;
-                for (i, v) in self.remaining_plays.iter().enumerate() {
-                    if v == &play {
-                        index = i;
-                        break;
-                    }
-                }
-                self.remaining_plays.remove(index);
+        pub fn apply_move(&mut self, _move: Move) -> bool {
+            if empty_cells(self.cells).contains(&_move) {
+                self.cells[_move.0][_move.1] = Some(self.current_player);
                 self.current_player.switch_player();
+                true
+            } else {
+                false
             }
         }
 
         fn is_stalemate(&self) -> bool {
-            if self.remaining_plays.is_empty() {
+            if empty_cells(self.cells).is_empty() {
                 println!();
                 self.draw();
                 println!("\nGame over, stalemate.\n");
