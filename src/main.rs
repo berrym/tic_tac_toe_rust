@@ -9,7 +9,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let current_player = board.current_player();
 
         println!("\n{}'s turn\n", current_player);
-        board.draw();
+        println!("{}", board);
 
         if current_player == 'O' {
             let play = board.generate_ai_play().unwrap();

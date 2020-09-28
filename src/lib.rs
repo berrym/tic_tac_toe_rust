@@ -1,5 +1,6 @@
 pub mod game {
     use rand::seq::SliceRandom;
+    use std::fmt;
     use std::io::{self, Write};
     use std::{thread, time};
 
@@ -36,8 +37,8 @@ pub mod game {
         for (x, row) in cells.iter().enumerate() {
             for (y, cell) in row.iter().enumerate() {
                 match cell {
-                    Some(_cell) => {},
-                    _ => empty_cells.push((x, y))
+                    Some(_cell) => {}
+                    _ => empty_cells.push((x, y)),
                 }
             }
         }
@@ -69,12 +70,41 @@ pub mod game {
         let _move = _move.trim().parse::<usize>();
         _move
     }
-    
+
     #[derive(Debug, Clone, Eq, PartialEq)]
     pub struct TicTacToe {
         current_player: Player,
         cells: [[Option<Player>; 3]; 3],
-        empty_moves: Vec::<usize>
+        empty_moves: Vec<usize>,
+    }
+
+    impl fmt::Display for TicTacToe {
+        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+            writeln!(
+                f,
+                " {} | {} | {} ",
+                self.repr_cell(self.ref_cell(1), '1'),
+                self.repr_cell(self.ref_cell(2), '2'),
+                self.repr_cell(self.ref_cell(3), '3')
+            )?;
+            writeln!(f, "---|---|---")?;
+            writeln!(
+                f,
+                " {} | {} | {} ",
+                self.repr_cell(self.ref_cell(4), '4'),
+                self.repr_cell(self.ref_cell(5), '5'),
+                self.repr_cell(self.ref_cell(6), '6')
+            )?;
+            writeln!(f, "---|---|---")?;
+            writeln!(
+                f,
+                " {} | {} | {} ",
+                self.repr_cell(self.ref_cell(7), '7'),
+                self.repr_cell(self.ref_cell(8), '8'),
+                self.repr_cell(self.ref_cell(9), '9')
+            )?;
+            Ok(())
+        }
     }
 
     impl TicTacToe {
@@ -88,7 +118,9 @@ pub mod game {
 
         pub fn generate_ai_play(&mut self) -> Option<&usize> {
             thread::sleep(time::Duration::from_millis(500));
-            self.empty_moves = (1..=empty_cells(self.cells).len()).map(usize::from).collect();
+            self.empty_moves = (1..=empty_cells(self.cells).len())
+                .map(usize::from)
+                .collect();
             self.empty_moves.choose(&mut rand::thread_rng())
         }
 
@@ -118,29 +150,6 @@ pub mod game {
             }
         }
 
-        pub fn draw(&self) {
-            println!(
-                " {} | {} | {} ",
-                self.repr_cell(self.ref_cell(1), '1'),
-                self.repr_cell(self.ref_cell(2), '2'),
-                self.repr_cell(self.ref_cell(3), '3')
-            );
-            println!("---|---|---");
-            println!(
-                " {} | {} | {} ",
-                self.repr_cell(self.ref_cell(4), '4'),
-                self.repr_cell(self.ref_cell(5), '5'),
-                self.repr_cell(self.ref_cell(6), '6')
-            );
-            println!("---|---|---");
-            println!(
-                " {} | {} | {} ",
-                self.repr_cell(self.ref_cell(7), '7'),
-                self.repr_cell(self.ref_cell(8), '8'),
-                self.repr_cell(self.ref_cell(9), '9')
-            );
-        }
-
         pub fn apply_move(&mut self, _move: Move) -> bool {
             if empty_cells(self.cells).contains(&_move) {
                 self.cells[_move.0][_move.1] = Some(self.current_player);
@@ -154,7 +163,7 @@ pub mod game {
         fn is_stalemate(&self) -> bool {
             if empty_cells(self.cells).is_empty() {
                 println!();
-                self.draw();
+                println!("{}", self);
                 println!("\nGame over, stalemate.\n");
                 true
             } else {
@@ -189,7 +198,7 @@ pub mod game {
 
             if winner != None {
                 println!();
-                self.draw();
+                println!("{}", self);
                 println!("\nGame over! {} wins!\n", winner.unwrap().to_char());
                 true
             } else {
