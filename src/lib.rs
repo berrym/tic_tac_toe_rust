@@ -161,18 +161,7 @@ pub mod game {
             }
         }
 
-        fn is_stalemate(&self) -> bool {
-            if empty_cells(self.cells).is_empty() {
-                println!();
-                println!("{}", self);
-                println!("\nGame over, stalemate.\n");
-                true
-            } else {
-                false
-            }
-        }
-
-        fn has_winner(&self) -> bool {
+        fn has_winner(&self) -> Option<Player> {
             let mut winner: Option<Player> = None;
 
             for i in 0..3 {
@@ -196,19 +185,34 @@ pub mod game {
                 (Some(x), Some(y), Some(z)) if x == y && y == z => winner = Some(x),
                 _ => {}
             }
+            winner
+        }
 
+        fn is_win(&self) -> bool {
+            let winner = self.has_winner();
             if winner != None {
                 println!();
                 println!("{}", self);
-                println!("\nGame over! {} wins!\n", winner.unwrap().to_char());
+                println!("\nGame over! {:?} wins!\n", winner.unwrap());
                 true
             } else {
                 false
             }
         }
 
-        pub fn is_game_over(&self) -> bool {
-            if self.has_winner() {
+        fn is_stalemate(&self) -> bool {
+            if empty_cells(self.cells).is_empty() {
+                println!();
+                println!("{}", self);
+                println!("\nGame over, stalemate.\n");
+                true
+            } else {
+                false
+            }
+        }
+
+        pub fn game_over(&self) -> bool {
+            if self.is_win() {
                 true
             } else if self.is_stalemate() {
                 true

@@ -25,7 +25,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         board.apply_move(_move.unwrap());
 
-        if board.is_game_over() {
+        if board.game_over() {
             break;
         }
     }
