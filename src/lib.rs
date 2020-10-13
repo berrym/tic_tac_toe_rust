@@ -1,10 +1,8 @@
 pub mod game {
-    use rand::seq::SliceRandom;
     use std::fmt;
     use std::io::{self, Write};
-    use std::{thread, time};
 
-    pub type Move = (usize, usize);
+    pub type Play = (usize, usize);
 
     #[derive(Debug, Copy, Clone, Eq, PartialEq)]
     pub enum Player {
@@ -12,7 +10,24 @@ pub mod game {
         O,
     }
 
+    pub type Board = [[Option<Player>; 3]; 3];
+
+    #[derive(Debug, Copy, Clone, Eq, PartialEq)]
+    pub struct MiniMaxResult {
+        pub play: Option<Play>,
+        pub score: Option<i32>,
+    }
+
+    #[derive(Debug, Clone, Eq, PartialEq)]
+    pub struct TicTacToe {
+        pub cells: Board,
+        pub current_player: Player,
+        pub empty_plays: Vec<Play>,
+    }
+
+    // Implement the Player struct
     impl Player {
+        // Represent a Player as a char
         fn to_char(self) -> char {
             match self {
                 Player::X => 'X',
@@ -20,6 +35,7 @@ pub mod game {
             }
         }
 
+        // Return the opposite player
         fn other_player(self) -> Player {
             match self {
                 Player::X => Player::O,
@@ -27,45 +43,121 @@ pub mod game {
             }
         }
 
+        // Switch current player
         fn switch_player(&mut self) {
             *self = self.other_player()
         }
 
-        pub fn get_move(&self) -> Option<Move> {
+        // Get a play from human user
+        pub fn get_play(&self) -> Option<Play> {
             print!("\nEnter a number: ");
             io::stdout().flush().unwrap();
-            let mut _move = String::new();
+            let mut play = String::new();
             io::stdin()
-                .read_line(&mut _move)
+                .read_line(&mut play)
                 .expect("Failed to get input!");
-            let _move = _move.trim().parse::<usize>();
-            translate_to_coord(_move.unwrap())
+            let play = play.trim().parse::<usize>();
+            translate_to_coord(play.unwrap())
         }
 
-        pub fn generate_ai_move(&self, state: &mut TicTacToe) -> Option<Move> {
-            thread::sleep(time::Duration::from_millis(500));
-            state.empty_moves = (1..=empty_cells(state.cells).len())
-                .map(usize::from)
-                .collect();
-            let rand = state.empty_moves.choose(&mut rand::thread_rng()).unwrap();
-            translate_to_coord(*rand)
+        // Evaluate score of board state
+        fn evaluate(&self, state: &TicTacToe) -> Option<i32> {
+            let result = state.has_winner();
+            match result {
+                Some(Player::X) => Some(1),
+                Some(Player::O) => Some(-1),
+                _ => Some(0),
+            }
+        }
+
+        // Apply recursive minimax algorithm to determine AI move
+        pub fn minimax(
+            &self,
+            state: &mut TicTacToe,
+            depth: usize,
+            player: Player,
+        ) -> Option<MiniMaxResult> {
+            let mut best: MiniMaxResult;
+
+            // Initialize best score for either Player
+            if player == Player::X {
+                best = MiniMaxResult {
+                    play: None,
+                    score: Some(std::i32::MIN),
+                };
+            } else {
+                best = MiniMaxResult {
+                    play: None,
+                    score: Some(std::i32::MAX),
+                };
+            }
+
+            // Initialize the simulation results
+            let mut sim_score: MiniMaxResult = MiniMaxResult {
+                play: None,
+                score: None,
+            };
+
+            // If depth is zero stop and return simulated score
+            if depth == 0 {
+                sim_score.score = self.evaluate(state);
+                return Some(sim_score);
+            }
+
+            // If state has a winner stop and return score
+            if let Some(_winner) = state.has_winner() {
+                sim_score.score = self.evaluate(state);
+                return Some(sim_score);
+            }
+
+            for cell in empty_plays(state.cells) {
+                // Create a copy of the board for restoration after simulation
+                let state_copy = state.cells.clone();
+
+                // Simulate possible moves
+                let x = cell.0;
+                let y = cell.1;
+                state.cells[x][y] = Some(player);
+                sim_score = self
+                    .minimax(state, depth - 1, player.other_player())
+                    .unwrap();
+
+                // Undo simulation
+                state.cells = state_copy;
+
+                // Determine best score for player
+                sim_score.play = Some((x, y));
+
+                if player == Player::X {
+                    if sim_score.score > best.score {
+                        best = sim_score; // max value
+                    }
+                } else {
+                    if sim_score.score < best.score {
+                        best = sim_score; // min value
+                    }
+                }
+            }
+            Some(best)
         }
     }
 
-    pub fn empty_cells(cells: [[Option<Player>; 3]; 3]) -> Vec<Move> {
-        let mut empty_cells: Vec<Move> = vec![];
+    // Create a vector of available plays
+    pub fn empty_plays(cells: Board) -> Vec<Play> {
+        let mut empty_plays: Vec<Play> = vec![];
         for (x, row) in cells.iter().enumerate() {
             for (y, cell) in row.iter().enumerate() {
                 match cell {
-                    Some(_cell) => {}
-                    _ => empty_cells.push((x, y)),
+                    Some(_cell) => (),
+                    _ => empty_plays.push((x, y)),
                 }
             }
         }
-        empty_cells
+        empty_plays
     }
 
-    pub fn translate_to_coord(index: usize) -> Option<Move> {
+    // Translate user visible play numbers to valid coordinates
+    pub fn translate_to_coord(index: usize) -> Option<Play> {
         match index {
             1 => Some((0, 0)),
             2 => Some((0, 1)),
@@ -80,13 +172,7 @@ pub mod game {
         }
     }
 
-    #[derive(Debug, Clone, Eq, PartialEq)]
-    pub struct TicTacToe {
-        current_player: Player,
-        cells: [[Option<Player>; 3]; 3],
-        empty_moves: Vec<usize>,
-    }
-
+    // Implement display formatting for TicTacToe struct
     impl fmt::Display for TicTacToe {
         fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
             writeln!(
@@ -116,19 +202,32 @@ pub mod game {
         }
     }
 
+    // Instantiate an implementation of TicTacToe
     impl TicTacToe {
         pub fn new() -> TicTacToe {
             TicTacToe {
-                cells: [[None, None, None], [None, None, None], [None, None, None]],
                 current_player: Player::X,
-                empty_moves: vec![],
+                cells: [[None; 3]; 3],
+                empty_plays: vec![
+                    (0, 0),
+                    (0, 1),
+                    (0, 2),
+                    (1, 0),
+                    (1, 1),
+                    (1, 2),
+                    (2, 0),
+                    (2, 1),
+                    (2, 2),
+                ],
             }
         }
 
+        // Return current player
         pub fn current_player(&self) -> Player {
             self.current_player
         }
 
+        // Reference avaialble plays (cells) by index 1-9
         fn ref_cell(&self, index: usize) -> Option<Player> {
             match index {
                 1 => self.cells[0][0],
@@ -144,6 +243,23 @@ pub mod game {
             }
         }
 
+        // Reverse functionality of ref cell, take a coordinate and return an index
+        pub fn cell_index(&self, play: Play) -> Option<usize> {
+            match play {
+                (0, 0) => Some(0),
+                (0, 1) => Some(1),
+                (0, 2) => Some(2),
+                (1, 0) => Some(3),
+                (1, 1) => Some(4),
+                (1, 2) => Some(5),
+                (2, 0) => Some(6),
+                (2, 1) => Some(7),
+                (2, 2) => Some(8),
+                _ => None,
+            }
+        }
+
+        // Represemt a play (cell) as a character
         fn repr_cell(&self, cell: Option<Player>, none_char: char) -> char {
             match cell {
                 Some(p) => p.to_char(),
@@ -151,9 +267,11 @@ pub mod game {
             }
         }
 
-        pub fn apply_move(&mut self, _move: Move) -> bool {
-            if empty_cells(self.cells).contains(&_move) {
-                self.cells[_move.0][_move.1] = Some(self.current_player);
+        // Apply a play to the board
+        pub fn apply_play(&mut self, play: Option<Play>) -> bool {
+            if let Some(p) = play {
+                self.cells[p.0][p.1] = Some(self.current_player);
+                self.empty_plays = empty_plays(self.cells);
                 self.current_player.switch_player();
                 true
             } else {
@@ -161,6 +279,7 @@ pub mod game {
             }
         }
 
+        // Check for a winner
         fn has_winner(&self) -> Option<Player> {
             let mut winner: Option<Player> = None;
 
@@ -168,26 +287,27 @@ pub mod game {
                 // Columns
                 match (self.cells[i][0], self.cells[i][1], self.cells[i][2]) {
                     (Some(x), Some(y), Some(z)) if x == y && y == z => winner = Some(x),
-                    _ => {}
+                    _ => (),
                 }
                 // Rows
                 match (self.cells[0][i], self.cells[1][i], self.cells[2][i]) {
                     (Some(x), Some(y), Some(z)) if x == y && y == z => winner = Some(x),
-                    _ => {}
+                    _ => (),
                 }
             }
             // Diagonals
             match (self.cells[0][0], self.cells[1][1], self.cells[2][2]) {
                 (Some(x), Some(y), Some(z)) if x == y && y == z => winner = Some(x),
-                _ => {}
+                _ => (),
             }
             match (self.cells[2][0], self.cells[1][1], self.cells[0][2]) {
                 (Some(x), Some(y), Some(z)) if x == y && y == z => winner = Some(x),
-                _ => {}
+                _ => (),
             }
             winner
         }
 
+        // Helper function for has_winner and game_over
         fn is_win(&self) -> bool {
             let winner = self.has_winner();
             if winner != None {
@@ -200,8 +320,9 @@ pub mod game {
             }
         }
 
+        // Helper function for game_over
         fn is_stalemate(&self) -> bool {
-            if empty_cells(self.cells).is_empty() {
+            if empty_plays(self.cells).is_empty() {
                 println!();
                 println!("{}", self);
                 println!("\nGame over, stalemate.\n");
@@ -211,6 +332,7 @@ pub mod game {
             }
         }
 
+        // Check if the game is over
         pub fn game_over(&self) -> bool {
             if self.is_win() {
                 true
