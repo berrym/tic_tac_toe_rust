@@ -20,7 +20,7 @@ pub mod game {
 
     #[derive(Debug, Clone, Eq, PartialEq)]
     pub struct TicTacToe {
-        pub cells: Board,
+        pub board: Board,
         pub current_player: Player,
         pub empty_plays: Vec<Play>,
     }
@@ -110,20 +110,20 @@ pub mod game {
                 return Some(sim_score);
             }
 
-            for cell in empty_plays(state.cells) {
+            for cell in empty_plays(state.board) {
                 // Create a copy of the board for restoration after simulation
-                let state_copy = state.cells.clone();
+                let state_copy = state.board.clone();
 
                 // Simulate possible moves
                 let x = cell.0;
                 let y = cell.1;
-                state.cells[x][y] = Some(player);
+                state.board[x][y] = Some(player);
                 sim_score = self
                     .minimax(state, depth - 1, player.other_player())
                     .unwrap();
 
                 // Undo simulation
-                state.cells = state_copy;
+                state.board = state_copy;
 
                 // Determine best score for player
                 sim_score.play = Some((x, y));
@@ -143,9 +143,9 @@ pub mod game {
     }
 
     // Create a vector of available plays
-    pub fn empty_plays(cells: Board) -> Vec<Play> {
+    pub fn empty_plays(board: Board) -> Vec<Play> {
         let mut empty_plays: Vec<Play> = vec![];
-        for (x, row) in cells.iter().enumerate() {
+        for (x, row) in board.iter().enumerate() {
             for (y, cell) in row.iter().enumerate() {
                 match cell {
                     Some(_cell) => (),
@@ -207,7 +207,7 @@ pub mod game {
         pub fn new() -> TicTacToe {
             TicTacToe {
                 current_player: Player::X,
-                cells: [[None; 3]; 3],
+                board: [[None; 3]; 3],
                 empty_plays: vec![
                     (0, 0),
                     (0, 1),
@@ -230,20 +230,20 @@ pub mod game {
         // Reference avaialble plays (cells) by index 1-9
         fn ref_cell(&self, index: usize) -> Option<Player> {
             match index {
-                1 => self.cells[0][0],
-                2 => self.cells[0][1],
-                3 => self.cells[0][2],
-                4 => self.cells[1][0],
-                5 => self.cells[1][1],
-                6 => self.cells[1][2],
-                7 => self.cells[2][0],
-                8 => self.cells[2][1],
-                9 => self.cells[2][2],
+                1 => self.board[0][0],
+                2 => self.board[0][1],
+                3 => self.board[0][2],
+                4 => self.board[1][0],
+                5 => self.board[1][1],
+                6 => self.board[1][2],
+                7 => self.board[2][0],
+                8 => self.board[2][1],
+                9 => self.board[2][2],
                 _ => None,
             }
         }
 
-        // Reverse functionality of ref cell, take a coordinate and return an index
+        // Reverse functionality of ref cell, take a coordinate and return Some index
         pub fn cell_index(&self, play: Play) -> Option<usize> {
             match play {
                 (0, 0) => Some(0),
@@ -270,8 +270,8 @@ pub mod game {
         // Apply a play to the board
         pub fn apply_play(&mut self, play: Option<Play>) -> bool {
             if let Some(p) = play {
-                self.cells[p.0][p.1] = Some(self.current_player);
-                self.empty_plays = empty_plays(self.cells);
+                self.board[p.0][p.1] = Some(self.current_player);
+                self.empty_plays = empty_plays(self.board);
                 self.current_player.switch_player();
                 true
             } else {
@@ -285,22 +285,22 @@ pub mod game {
 
             for i in 0..3 {
                 // Columns
-                match (self.cells[i][0], self.cells[i][1], self.cells[i][2]) {
+                match (self.board[i][0], self.board[i][1], self.board[i][2]) {
                     (Some(x), Some(y), Some(z)) if x == y && y == z => winner = Some(x),
                     _ => (),
                 }
                 // Rows
-                match (self.cells[0][i], self.cells[1][i], self.cells[2][i]) {
+                match (self.board[0][i], self.board[1][i], self.board[2][i]) {
                     (Some(x), Some(y), Some(z)) if x == y && y == z => winner = Some(x),
                     _ => (),
                 }
             }
             // Diagonals
-            match (self.cells[0][0], self.cells[1][1], self.cells[2][2]) {
+            match (self.board[0][0], self.board[1][1], self.board[2][2]) {
                 (Some(x), Some(y), Some(z)) if x == y && y == z => winner = Some(x),
                 _ => (),
             }
-            match (self.cells[2][0], self.cells[1][1], self.cells[0][2]) {
+            match (self.board[2][0], self.board[1][1], self.board[0][2]) {
                 (Some(x), Some(y), Some(z)) if x == y && y == z => winner = Some(x),
                 _ => (),
             }
@@ -322,7 +322,7 @@ pub mod game {
 
         // Helper function for game_over
         fn is_stalemate(&self) -> bool {
-            if empty_plays(self.cells).is_empty() {
+            if empty_plays(self.board).is_empty() {
                 println!();
                 println!("{}", self);
                 println!("\nGame over, stalemate.\n");
