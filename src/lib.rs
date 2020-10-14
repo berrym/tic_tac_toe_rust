@@ -10,6 +10,11 @@ pub mod game {
         O,
     }
 
+    pub struct Config {
+        pub player_x_ai: bool,
+        pub player_o_ai: bool,
+    }
+
     pub type Board = [[Option<Player>; 3]; 3];
 
     #[derive(Debug, Copy, Clone, Eq, PartialEq)]
