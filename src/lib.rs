@@ -25,9 +25,9 @@ pub mod game {
 
     #[derive(Debug, Clone, Eq, PartialEq)]
     pub struct TicTacToe {
-        pub board: Board,
-        pub current_player: Player,
-        pub empty_plays: Vec<Play>,
+        board: Board,
+        current_player: Player,
+        empty_plays: Vec<Play>,
     }
 
     // Implement the Player struct
@@ -211,8 +211,8 @@ pub mod game {
     impl TicTacToe {
         pub fn new() -> TicTacToe {
             TicTacToe {
-                current_player: Player::X,
                 board: [[None; 3]; 3],
+                current_player: Player::X,
                 empty_plays: vec![
                     (0, 0),
                     (0, 1),
@@ -225,6 +225,11 @@ pub mod game {
                     (2, 2),
                 ],
             }
+        }
+
+        // Return a reference to the board
+        pub fn board(&self) -> Board {
+            self.board
         }
 
         // Return current player
@@ -314,11 +319,10 @@ pub mod game {
 
         // Helper function for has_winner and game_over
         fn is_win(&self) -> bool {
-            let winner = self.has_winner();
-            if winner != None {
+            if let Some(winner) = self.has_winner() {
                 println!();
                 println!("{}", self);
-                println!("\nGame over! {:?} wins!\n", winner.unwrap());
+                println!("\nGame over! {:?} wins!\n", winner);
                 true
             } else {
                 false

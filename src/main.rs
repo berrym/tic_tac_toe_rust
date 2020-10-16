@@ -1,5 +1,5 @@
 use clap::{App, Arg};
-use tic_tac_toe::game::{Config, MiniMaxResult, Play, Player, TicTacToe};
+use tic_tac_toe::game::{Config, empty_plays, MiniMaxResult, Play, Player, TicTacToe};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Parse command line
@@ -68,15 +68,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 fn game_loop(config: Config) -> Result<(), Box<dyn std::error::Error>> {
     let mut game = TicTacToe::new();
 
-    game.current_player = Player::X;
-
     println!("Tic-Tac-Toe");
     println!("\n{:?}'s turn\n", game.current_player());
     println!("{}", game);
 
     // Main game loop
     loop {
-        let moves: usize = game.empty_plays.len();
+        let moves: usize = empty_plays(game.board()).len();
         let player: Player = game.current_player();
         let mut play: Option<Play> = None;
         let mini_max_result: Option<MiniMaxResult>;
