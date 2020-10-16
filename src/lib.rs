@@ -54,7 +54,7 @@ pub mod game {
         }
 
         // Get a play from human user
-        pub fn get_play(&self) -> Option<Play> {
+        pub fn get_play(&self, board: Board) -> Option<Play> {
             print!("\nEnter a number: ");
             io::stdout().flush().unwrap();
             let mut play = String::new();
@@ -62,7 +62,12 @@ pub mod game {
                 .read_line(&mut play)
                 .expect("Failed to get input!");
             let play = play.trim().parse::<usize>();
-            translate_to_coord(play.unwrap())
+            let coord = translate_to_coord(play.unwrap());
+            if empty_plays(board).iter().any(|&p| p == coord.unwrap()) {
+                Some(coord.unwrap())
+            } else {
+                None
+            }
         }
 
         // Evaluate score of board state

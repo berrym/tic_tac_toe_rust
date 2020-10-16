@@ -1,5 +1,5 @@
 use clap::{App, Arg};
-use tic_tac_toe::game::{Config, empty_plays, MiniMaxResult, Play, Player, TicTacToe};
+use tic_tac_toe::game::{empty_plays, Config, MiniMaxResult, Play, Player, TicTacToe};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Parse command line
@@ -90,7 +90,7 @@ fn game_loop(config: Config) -> Result<(), Box<dyn std::error::Error>> {
                     _ => continue,
                 }
             } else {
-                play = player.get_play();
+                play = player.get_play(game.board());
             }
         } else {
             if config.player_o_ai {
@@ -103,7 +103,7 @@ fn game_loop(config: Config) -> Result<(), Box<dyn std::error::Error>> {
                     _ => continue,
                 }
             } else {
-                play = player.get_play();
+                play = player.get_play(game.board());
             }
         }
 
