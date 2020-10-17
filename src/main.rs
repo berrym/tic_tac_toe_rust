@@ -1,4 +1,5 @@
 use clap::{App, Arg};
+use std::io::{self, Write};
 use tic_tac_toe::game::{empty_plays, Config, MiniMaxResult, Play, Player, TicTacToe};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -59,16 +60,63 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             player_o_ai: true,
         })?;
     } else {
-        cli.usage();
+        main_menu()?;
     }
     Ok(())
+}
+
+fn main_menu() -> Result<(), Box<dyn std::error::Error>> {
+    loop {
+        println!("Tic-Tac-Toe\n");
+        println!("1) Human vs Computer");
+        println!("2) Human vs Human");
+        println!("3) Computer vs Human");
+        println!("4) Computer vs Computer");
+
+        print!("\nEnter a number: ");
+        io::stdout().flush().unwrap();
+        let mut game_type = String::new();
+        io::stdin()
+            .read_line(&mut game_type)
+            .expect("Failed to get input!");
+        let game_type = game_type.trim().parse::<usize>();
+
+        let game_config: Config;
+        match game_type {
+            Ok(1) => {
+                game_config = Config {
+                    player_x_ai: false,
+                    player_o_ai: true,
+                }
+            }
+            Ok(2) => {
+                game_config = Config {
+                    player_x_ai: false,
+                    player_o_ai: false,
+                }
+            }
+            Ok(3) => {
+                game_config = Config {
+                    player_x_ai: true,
+                    player_o_ai: false,
+                }
+            }
+            Ok(4) => {
+                game_config = Config {
+                    player_x_ai: true,
+                    player_o_ai: true,
+                }
+            }
+            _ => continue,
+        }
+        game_loop(game_config)?
+    }
 }
 
 // Main game loop
 fn game_loop(config: Config) -> Result<(), Box<dyn std::error::Error>> {
     let mut game = TicTacToe::new();
 
-    println!("Tic-Tac-Toe");
     println!("\n{:?}'s turn\n", game.current_player());
     println!("{}", game);
 
@@ -79,7 +127,7 @@ fn game_loop(config: Config) -> Result<(), Box<dyn std::error::Error>> {
         let mut play: Option<Play> = None;
         let mini_max_result: Option<MiniMaxResult>;
 
-        if game.current_player() == Player::X {
+        if player == Player::X {
             if config.player_x_ai {
                 mini_max_result = player.minimax(&mut game, moves, player);
                 match mini_max_result {
@@ -110,7 +158,7 @@ fn game_loop(config: Config) -> Result<(), Box<dyn std::error::Error>> {
         // Try to apply the play to the game board
         if game.apply_play(play) {
             if game.game_over() {
-                break;
+                std::process::exit(0);
             }
         } else {
             println!("Bad move...{:?}", play);
@@ -119,6 +167,4 @@ fn game_loop(config: Config) -> Result<(), Box<dyn std::error::Error>> {
         println!("\n{:?}'s turn\n", game.current_player());
         println!("{}", game);
     }
-    game.game_over();
-    Ok(())
 }
