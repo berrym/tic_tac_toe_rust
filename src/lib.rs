@@ -274,7 +274,7 @@ pub mod game {
             }
         }
 
-        // Represemt a play (cell) as a character
+        // Represent a play (cell) as a character
         fn repr_cell(&self, cell: Option<Player>, none_char: char) -> char {
             match cell {
                 Some(p) => p.to_char(),
