@@ -137,6 +137,7 @@ fn game_loop(config: Config) -> Result<(), Box<dyn std::error::Error>> {
                     },
                     _ => continue,
                 }
+                std::thread::sleep(std::time::Duration::from_millis(1000));
             } else {
                 play = player.get_play(game.board());
             }
@@ -150,6 +151,7 @@ fn game_loop(config: Config) -> Result<(), Box<dyn std::error::Error>> {
                     },
                     _ => continue,
                 }
+                std::thread::sleep(std::time::Duration::from_millis(1000));
             } else {
                 play = player.get_play(game.board());
             }
